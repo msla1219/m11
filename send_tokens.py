@@ -15,16 +15,34 @@ headers = {
 acl = algod.AlgodClient(algod_token, algod_address, headers)
 min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#minimum-balance
 
-def send_tokens( receiver_pk, tx_amount ):
+def send_tokens(receiver_pk, tx_amount):
     params = acl.suggested_params()
     gen_hash = params.gh
     first_valid_round = params.first
     tx_fee = params.min_fee
     last_valid_round = params.last
 
-    #Your code here
+    # Get and Set Transaction Parameters
+    existing_account = 'BE4WTVI7TCHP3GXAJBZXXWFUI5TCF3WEAOX6G3REBWP7PNXIEIPCK7XVD4' #pk
+    account_sk = 'VTvB8pVAURKdgAVm/j0I7qvvT5ELhatbGG1mHUwz4/EJOWnVH5iO/ZrgSHN72LRHZiLuxAOv424kDZ/3tugiHg=='
 
-    return sender_pk, txid
+    # send_to_address = 'AEC4WDHXCDF4B5LBNXXRTB3IJTVJSWUZ4VJ4THPU2QGRJGTA3MIDFN3CQA'
+
+    # Create and Sign Transaction
+    tx = transaction.PaymentTxn(existing_account, tx_fee,
+                                first_valid_round, last_valid_round, gen_hash,
+                                receiver_pk, tx_amount, flat_fee=True)
+    signed_tx = tx.sign(account_sk)
+
+    try:
+        tx_confirm = acl.send_transaction(signed_tx)
+        txid = signed_tx.transaction.get_txid()
+        print('Transaction sent with ID', txid)
+        wait_for_confirmation(acl, txid=txid)
+    except Exception as e:
+        print(e)
+
+    return existing_account, txid
 
 # Function from Algorand Inc.
 def wait_for_confirmation(client, txid):
